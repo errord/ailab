@@ -11,6 +11,16 @@ def logging(msg):
         return
     print msg
 
+class Seq(object):
+    seq = 0
+    def __init__(self):
+        pass
+
+    @classmethod
+    def get_seq(cls):
+        cls.seq += 1
+        return cls.seq
+
 class Node(object):
     STATE_STOP = 0
     STATE_ACTIVATION = 1
@@ -20,6 +30,7 @@ class Node(object):
         self._state = self.STATE_STOP
         self._actived = False
         self._link_node = []
+        self._seq = 0
 
     def get_natures(self):
         return self._natures
@@ -39,6 +50,7 @@ class Node(object):
 
     def actived(self):
         self._actived = True
+        self._seq = Seq.get_seq()
 
     def activation(self, stimulates):
         pass
@@ -93,9 +105,11 @@ class SymbolNode(Node):
         super(SymbolNode, self).__init__(natures)
 
     def __str__(self):
-        return "<SymbolNode state:%s actived:%s symbol:%s>" % (self._state, 
-                                                               self._actived,
-                                                               self._natures)
+        return "<SymbolNode seq:%s state:%s actived:%s symbol:%s>" % (
+            self._seq,
+            self._state, 
+            self._actived,
+            self._natures)
 
     def activation(self, stimulates):
         stimulates = str(stimulates)
@@ -119,8 +133,10 @@ class OpNode(Node):
         self._op_args = []
 
     def __str__(self):
-        return "<OpNode state:%s op:%s args:%s>" % (self._state, 
-                                                    self._natures, self._op_args)
+        return "<OpNode seq:%s state:%s op:%s args:%s>" % (
+            self._seq,
+            self._state, 
+            self._natures, self._op_args)
 
     def activation(self, stimulates):
         print 'a'*10, stimulates
@@ -197,10 +213,14 @@ class NN(object):
             for node in self._nodes:
                 node.activation(natures)
 
+    def _action_order(self):
+        self._nodes.sort(key=lambda node: node._seq)
+
     def _actions(self):
         has_activ = True
         while has_activ:
             has_activ = False
+            self._action_order()
             for node in self._nodes:
                 node.action()
                 if node.is_activ():
